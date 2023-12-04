@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codeflix</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+    <div class="page-wrapper">
+        <div id="hero" class="container-fluid flex-grow-1 position-relative overflow-hidden justify-content-center">
+            <div id="ytplayer" controls="0" enablejsapi="1" fs="0"></div>
+            <div class="overlay"></div>
+            <div class="row position-relative">
+                <div class="col" id="hero-text">
+
+                </div>
+            </div>
+        </div>
+        <div class="container-fluid p-0 pull">
+            <div class="d-flex movies p-5">
+                <div class="d-flex gap-2" id="nowPlaying">
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="page-wrapper"></div>
+    <script src="https://www.youtube.com/s/player/31e0b6d9/www-widgetapi.vflset/www-widgetapi.js"></script>
+    <script type="module" src="./js/main.js"></script>
+</body>
+
+</html>
