@@ -5,6 +5,8 @@ class TmdbAPI {
 		this.token = token;
 		this.base = "https://api.themoviedb.org/3";
 		this.now_playing = [];
+		this.popular = [];
+		this.discover = [];
 		// create this.movies -- an array-like object that only contains unique movies
 		this.movies = new Set(); // will add movies from any method that returns movies
 		this.queries = new Map();
@@ -29,7 +31,7 @@ class TmdbAPI {
 				return this.now_playing;
 			}
 		}
-		const url = `${this.base}/movie/now_playing?api_key=${this.token}`;
+		const url = `${this.base}/movie/now_playing?append_to_response=release_dates&api_key=${this.token}`;
 		const options = {
 			method: "GET",
 			headers: {
@@ -63,7 +65,59 @@ class TmdbAPI {
 				results: this.now_playing,
 			})
 		);
-		return data.results;
+		return movies;
+	}
+	async getPopular() {
+		if (this.popular.length > 0) {
+			console.log("getPopular() from saved property => ", this.popular);
+			return this.popular;
+		}
+		if (localStorage.getItem("popular")) {
+			const date = JSON.parse(localStorage.getItem("popular")).date;
+			const now = Date.now();
+			const diff = now - date;
+			const diffInHours = diff / (1000 * 60 * 60);
+			if (diffInHours < 24) {
+				console.log("getPopular() from local storage => ", JSON.parse(localStorage.getItem("popular")).results);
+				this.popular = JSON.parse(localStorage.getItem("popular")).results;
+				return this.popular;
+			}
+		}
+		const url = `${this.base}/movie/popular?api_key=${this.token}`;
+		const options = {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+			},
+		};
+		const response = await fetch(url, options);
+		const data = await response.json();
+		this.genres = await this.getGenres();
+		const movies = await Promise.all(
+			data.results.map(async (movie) => {
+				movie.genres = movie.genre_ids.map((id) => {
+					const genre = this.genres.find((genre) => genre.id === id);
+					return genre.name;
+				});
+				const videos = await this.getVideos(movie.id);
+				movie.videos = videos?.videos;
+				movie.trailer = videos?.trailer;
+				const images = await this.getImages(movie.id);
+				movie.images = images;
+				this.movies.add(movie);
+				return movie;
+			})
+		);
+		console.log("getPopular() from API => ", movies);
+		this.popular = movies;
+		localStorage.setItem(
+			"popular",
+			JSON.stringify({
+				date: Date.now(),
+				results: this.popular,
+			})
+		);
+		return movies;
 	}
 	async searchMovieTitle(query) {
 		query = encodeURI(query.toLowerCase());
@@ -107,12 +161,12 @@ class TmdbAPI {
 		return data.results;
 	}
 	async discoverGenre(genre) {
-		if (this.queries.has(genre)) {
-			console.log(`discoverGenre("${genre}") from saved property => `, this.queries.get(genre));
-			return this.queries.get(genre);
+		if (this.discover[genre]) {
+			console.log(`discoverGenre("${genre}") from saved property => `, this.discover[genre]);
+			return this.discover[genre];
 		}
 		if (localStorage.getItem(genre)) {
-			const date = JSON.parse(localStorage.getItem(genre)).date;
+			const date = JSON.parse(localStorage.getItem("discover"))[genre].date;
 			const now = Date.now();
 			const diff = now - date;
 			const diffInHours = diff / (1000 * 60 * 60);
@@ -122,7 +176,7 @@ class TmdbAPI {
 					JSON.parse(localStorage.getItem(genre)).results
 				);
 				const results = JSON.parse(localStorage.getItem(genre)).results;
-				this.queries.set(genre, results);
+				this.discover[genre] = results;
 				return results;
 			}
 		}
@@ -135,16 +189,30 @@ class TmdbAPI {
 		};
 		const response = await fetch(url, options);
 		const data = await response.json();
-		console.log(`discoverGenre("${genre}") from API => `, data.results);
-		this.queries.set(genre, data.results);
-		localStorage.setItem(
-			genre,
-			JSON.stringify({
-				date: Date.now(),
-				results: data.results,
+		const movies = await Promise.all(
+			data.results.map(async (movie) => {
+				const videos = await this.getVideos(movie.id);
+				movie.videos = videos?.videos;
+				movie.trailer = videos?.trailer;
+				const images = await this.getImages(movie.id);
+				movie.images = images;
+				this.movies.add(movie);
+				return movie;
 			})
 		);
-		return data.results;
+		console.log(`discoverGenre("${genre}") from API => `, movies);
+		this.discover[genre] = movies;
+		localStorage.setItem(
+			"discover",
+			JSON.stringify({
+				...JSON.parse(localStorage.getItem("discover")),
+				[genre]: {
+					date: Date.now(),
+					results: movies,
+				},
+			})
+		);
+		return movies;
 	}
 	async getGenres() {
 		if (this.genres.size > 0) {
