@@ -12,7 +12,7 @@ class TmdbAPI {
 		this.queries = new Map();
 		this.genres = new Map();
 	}
-	async getNowPlaying() {
+	async getNowPlayingMovies() {
 		if (this.now_playing.length > 0) {
 			console.log("getNowPlaying() from saved property => ", this.now_playing);
 			return this.now_playing;
@@ -67,7 +67,7 @@ class TmdbAPI {
 		);
 		return movies;
 	}
-	async getPopular() {
+	async getPopularMovies() {
 		if (this.popular.length > 0) {
 			console.log("getPopular() from saved property => ", this.popular);
 			return this.popular;
@@ -160,7 +160,7 @@ class TmdbAPI {
 		);
 		return data.results;
 	}
-	async discoverGenre(genre) {
+	async getMoviesByGenre(genre) {
 		if (this.discover[genre]) {
 			console.log(`discoverGenre("${genre}") from saved property => `, this.discover[genre]);
 			return this.discover[genre];
