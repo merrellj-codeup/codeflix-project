@@ -1,14 +1,19 @@
 import keys from "./keys.js";
 import TmdbAPI from "./api/TmdbAPI/index.js";
+import MoviesAppAPI from "./api/MoviesAppAPI/index.js";
 import HeroMovieCard from "./components/HeroMovieCard.js";
 import MovieList from "./components/MovieList.js";
 const tmdb = new TmdbAPI(keys.tmdb);
+const app = new MoviesAppAPI();
 
 // MAIN
 (async () => {
 	const nowPlaying = await tmdb.getNowPlayingMovies();
 	const heroMovieCard = new HeroMovieCard(nowPlaying[2]);
 	const nowPlayingList = new MovieList(nowPlaying, "Now Playing in Theaters");
+
+	const myFavs = await app.getMovies();
+	const myFavsList = new MovieList(myFavs, "My Favorites");
 
 	const popular = await tmdb.getPopularMovies();
 	const popularList = new MovieList(popular, "Popular Movies");
